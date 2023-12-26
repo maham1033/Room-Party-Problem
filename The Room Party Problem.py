@@ -1,3 +1,14 @@
+"""
+Created on 15th November 2023 18:56:34
+
+Project Title:
+    The Room Party Problem
+    From:
+    The Little Book of Semaphores
+        Allen B. Downey
+        Version 2.2.1
+"""
+
 import tkinter as tk
 from PIL import Image, ImageTk
 from tkinter import simpledialog, messagebox
@@ -5,12 +16,14 @@ import threading
 
 class RoomPartyProblem:
     def __init__(self):
+        # Attributes
         self.students = 0
         self.dean_state = 'not here'
         self.mutex = threading.Semaphore(1)
         self.turn = threading.Semaphore(1)
         self.clear = threading.Semaphore(0)
         self.lieIn = threading.Semaphore(0)
+        self.dean_leaving = False  # New boolean variable
 
     def dean_enters(self):
         self.mutex.acquire()
@@ -21,13 +34,15 @@ class RoomPartyProblem:
             self.dean_state = 'not here'
             self.mutex.release()
         elif self.students < 50:
-            messagebox.showinfo("Dean", "Dean: Number of students is less than 50. Dean cannot enter. Add more students.")
+            messagebox.showinfo("Dean",
+                                "Dean: Number of students is less than 50. Dean cannot enter. Add more students.")
             self.mutex.release()
         else:
             messagebox.showinfo("Dean", "Dean arrives.")
             self.dean_state = 'in the room'
             while self.students > 0:
-                num_students_to_remove = simpledialog.askinteger("Dean", "Dean: How many students do you want to remove?")
+                num_students_to_remove = simpledialog.askinteger("Dean",
+                                                                 "Dean: How many students do you want to remove?")
                 if num_students_to_remove is None:
                     num_students_to_remove = 0
                 if num_students_to_remove > self.students:
@@ -40,8 +55,8 @@ class RoomPartyProblem:
 
             self.break_up_party()
             self.turn.acquire()  # lock the turnstile
+            self.clear.release()  # signal students to proceed
             self.mutex.release()
-            self.clear.acquire()  # and get mutex from the student.
             self.ask_dean_leave()
             self.turn.release()  # unlock the turnstile
 
@@ -56,6 +71,7 @@ class RoomPartyProblem:
         leave_decision = messagebox.askyesno("Dean", "Dean: Do you want to leave the room?")
         if leave_decision:
             messagebox.showinfo("Dean", "Dean: Leaving the room.")
+            self.dean_leaving = True  # Set the dean_leaving flag
         else:
             self.menu()
 
@@ -126,6 +142,7 @@ class RoomPartyProblem:
                 break
             else:
                 print("Invalid choice. Please enter 1, 2, or 3.")
+
 
 # GUI Class
 class RoomPartyProblemGUI:
